@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin - Microservicios Docker</title>
+    <style>
+        :root {
+            --primary: black;
+            --secondary: #0d6efd;
+            --success: #27ae60;
+            --danger: #e74c3c;
+            --light: #ecf0f1;
+            --dark: #2c3e50;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 0;
+            background-color: #f5f7fa;
+            color: #333;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        header {
+            background-color: var(--secondary);
+            color: white;
+            padding: 20px 0;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+        h1, h2 {
+            color: var(--primary);
+        }
+        .card {
+            background: white;
+            border-radius: 5px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        th {
+            background-color: var(--light);
+        }
+        .status {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            font-weight: bold;
+        }
+        .status-up {
+            background-color: rgba(39, 174, 96, 0.2);
+            color: var(--success);
+        }
+        .status-down {
+            background-color: rgba(231, 76, 60, 0.2);
+            color: var(--danger);
+        }
+        .btn {
+            display: inline-block;
+            padding: 8px 16px;
+            background-color: var(--secondary);
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+            transition: background-color 0.3s;
+        }
+        .btn:hover {
+            background-color: var(--primary);
+        }
+        .health-check {
+            margin-top: 30px;
+        }
+        .config-code {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            font-family: monospace;
+            white-space: pre-wrap;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <h1>Panel de Administración - Microservicios Docker</h1>
+            <p>Proyecto Unidad 2 y 3 - SysAdmin 2025</p>
+        </div>
+    </header>
+
+    <div class="container">
+        <div class="card">
+            <h2>Configuración del Proxy</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Ruta</th>
+                        <th>Servicio Destino</th>
+                        <th>Puerto</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>/api/users/*</td>
+                        <td>user-service</td>
+                        <td>3000</td>
+                        <td><a href="/api/users/health" class="btn">Ver Health Check</a></td>
+                    </tr>
+                    <tr>
+                        <td>/api/tasks/*</td>
+                        <td>task-service</td>
+                        <td>4000</td>
+                        <td><a href="/api/tasks/health" class="btn">Ver Health Check</a></td>
+                    </tr>
+                    <tr>
+                        <td>/admin</td>
+                        <td>nginx</td>
+                        <td>80</td>
+                        <td><a href="/admin" class="btn">Actualizar</a></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="card">
+            <h2>Endpoints Disponibles</h2>
+            <div class="config-code">
+# Endpoints del <a href="/api/users">User-Service</a>:
+POST   /api/users       - Registrar nuevo usuario
+GET    /api/users       - Listar todos los usuarios
+GET    /api/users/{id}  - Obtener usuario específico
+GET    /api/users/health - Health check del servicio
+
+# Endpoints del <a href="/api/tasks">Task-Service</a>:
+POST   /api/tasks       - Crear nueva tarea
+GET    /api/tasks       - Listar todas las tareas
+GET    /api/tasks/{id}  - Obtener tarea específica
+PUT    /api/tasks/{id}  - Actualizar tarea
+GET    /api/tasks?user_id=X - Filtrar tareas por usuario
+GET    /api/tasks/health - Health check del servicio
+            </div>
+        </div>
+
+        <div class="card health-check">
+            <h2>Estado de los Servicios</h2>
+            <p>Última verificación: <span id="last-check">Justo ahora</span></p>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Servicio</th>
+                        <th>Estado</th>
+                        <th>Health Check</th>
+                        <th>Respuesta</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>user-service</td>
+                        <td><span class="status status-up">Activo</span></td>
+                        <td><code>GET /api/users/health</code></td>
+                        <td><code id="user-health">200 OK</code></td>
+                    </tr>
+                    <tr>
+                        <td>task-service</td>
+                        <td><span class="status status-up">Activo</span></td>
+                        <td><code>GET /api/tasks/health</code></td>
+                        <td><code id="task-health">200 OK</code></td>
+                    </tr>
+                    <tr>
+                        <td>nginx-proxy</td>
+                        <td><span class="status status-up">Activo</span></td>
+                        <td><code>HTTP/1.1 200</code></td>
+                        <td><code>Servidor en funcionamiento</code></td>
+                    </tr>
+                </tbody>
+            </table>
+            <button onclick="checkHealth()" class="btn">Verificar Estado</button>
+        </div>
+
+        <div class="card">
+            <h2>Configuración SSL</h2>
+            <p><strong>Estado:</strong> HTTPS habilitado con redirección automática</p>
+            <p><strong>Certificado:</strong> Let's Encrypt (simulado)</p>
+            <p><strong>Protocolos:</strong> TLSv1.2, TLSv1.3</p>
+            <a href="https://localhost/admin" class="btn">Acceder vía HTTPS</a>
+        </div>
+    </div>
+
+    <script>
+        // Simulación de health checks
+        function checkHealth() {
+            document.getElementById('last-check').textContent = new Date().toLocaleTimeString();
+            
+            // Simular verificación asíncrona
+            setTimeout(() => {
+                document.getElementById('user-health').textContent = '200 OK (healthy)';
+                document.getElementById('task-health').textContent = '200 OK (healthy)';
+            }, 800);
+            
+            return false;
+        }
+        
+        // Ejecutar al cargar la página
+        window.onload = checkHealth;
+    </script>
+</body>
+</html>
